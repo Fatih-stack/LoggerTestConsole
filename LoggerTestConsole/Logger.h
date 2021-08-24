@@ -3,21 +3,28 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif // !_CRT_SECURE_NO_WARNINGS
 
+#define WIN32
+
 #include <iostream>
 #include <mutex>
 #include <ctime>
 #include <fstream>
-#include <tchar.h>
 #ifdef WIN32
+#include <tchar.h>
 #include <windows.h>
-#endif
-#include <string>
-#include <sstream>
 #include <chrono>
+#include <string>
+#else
+#include <cstring>
+#include <wchar.h>
+#include <typeinfo>
+#endif
+#include <sstream>
 #include <algorithm>
 
 namespace aricanli {
 	namespace general {
+		#ifdef WIN32
 		class Timer
 		{
 		public:
@@ -50,7 +57,7 @@ namespace aricanli {
 			std::chrono::time_point<std::chrono::steady_clock> m_BeginTime;
 			bool m_Stop;
 		};
-
+		#endif
 		enum class Severity
 		{
 			Quiet = 0, Fatal = 8, Error = 16, Warning = 24, Info = 32, Verbose = 40, Debug = 48, Trace = 56
@@ -94,6 +101,7 @@ namespace aricanli {
 			void log_writefile(const T& value) {
 				file.close();
 				file.open(file_path, std::fstream::in | std::fstream::out | std::fstream::app);
+				#ifdef WIN32
 				if (typeid(value) == typeid(wchar_t const* __ptr64)) {
 					std::wstring temp = wstringer(value);
 					std::string res(temp.begin(), temp.end());
@@ -101,6 +109,15 @@ namespace aricanli {
 					std::cout << res << " ";
 					return;
 				}
+				#else
+				if (typeid(value) == typeid(wchar_t*)) {
+					std::wstring temp = wstringer(value);
+					std::string res(temp.begin(), temp.end());
+					file << res.c_str() << " ";
+					std::cout << res << " ";
+					return;
+				}
+				#endif
 				file << value << " ";
 				std::cout << value << " ";
 			}
@@ -130,7 +147,7 @@ namespace aricanli {
 		private:
 			Logger()
 			{
-				file_path = "C:\\Users\\hp\\source\\repos\\log.txt";
+				file_path = "log.txt";
 				enable_file_output(file_path);
 			}
 
@@ -178,11 +195,19 @@ namespace aricanli {
 						file.close();
 						file.open(file_path, std::fstream::in | std::fstream::out | std::fstream::app);
 						//check type wchar or char convert std::string to write file
+						#ifdef WIN32
 						if (typeid(msg) == typeid(wchar_t const* __ptr64)) {
 							std::wstring tmp = wstringer(msg);
 							std::string resT(tmp.begin(), tmp.end());
 							m_msg = resT;
 						}
+						#else
+						if (typeid(msg) == typeid(wchar_t*)) {
+							std::wstring tmp = wstringer(msg);
+							std::string resT(tmp.begin(), tmp.end());
+							m_msg = resT;
+						}
+						#endif		
 						else {
 							std::string resT = stringer(msg);
 							m_msg = resT;
