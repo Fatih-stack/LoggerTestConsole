@@ -7,8 +7,8 @@
 using namespace aricanli::general;
 
 void log_test(int n) {
-	LOG_DEBUG(_T("fatih"), n, _T("Write Args"), 3434);
-	LOG_WARN(_T("warning %d"), n, "sdsdsd", _T("fatih"), 7853);
+	LOG_DEBUG(L"fatih", n, L"Write Args", 3434);
+	LOG_WARN(L"warning %d", n, "sdsdsd", L"fatih", 7853);
 	LOG_ERROR("error %d", n, "Args Errrrrrrorrrrr");
 	LOG_FATAL("fatal error %d", n);
 	LOG_TRACE("Trace : %d", n);
