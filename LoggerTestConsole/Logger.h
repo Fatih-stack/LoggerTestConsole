@@ -264,8 +264,8 @@ namespace aricanli {
 			}
 
 			/********************************************************************************************
-			 * Def : Takes arguments which will be written to file and format them to write file properly
-			 * like log. (Log format : Date, Severity type, Args, line, File)
+			 * Def : Takes arguments which will be written to file and using mutex to format
+			 * them to write file properly like log. (Log format : Date, Severity type, Args, line, File)
 			 * Args : line => lineNumber, source => source File path, msg_priorty_str => Severity as string
 			 * msg_severity => severity to check whether severity bigger or not, msg => first user message
 			 * args => any type args (wchar,char, int ...)
@@ -307,6 +307,8 @@ namespace aricanli {
 						m_msg = resT;
 					}
 					{
+						//thread provides multithreading supports and also 
+						//locking to prevent writing to file from other code parts
 						typename std::lock_guard<std::mutex> lock2(log_mutex2);
 						std::ofstream file(file_path, std::ios_base::app);
 						//write file given inputs in a proper format for logging
@@ -316,11 +318,12 @@ namespace aricanli {
 					}
 					//write all type args to file
 					int dummy[] = { 0, ((void)log_writefile(std::forward<Args>(args)),0)... };
+					
+					//mutex locks to prevent writing to file from other code parts
 					typename std::lock_guard<std::mutex> lock2(log_mutex2);
 					std::ofstream file(file_path, std::ios_base::app);
 					file << " on line " << line << " in " << source.c_str() << "\n";
 					std::cout << " on line " << line << " in " << source << "\n";
-
 				}
 			}
 
@@ -336,7 +339,7 @@ namespace aricanli {
 					struct tm* timeinfo;
 					wchar_t buffer[80];
 
-					//define thread to support multithreading and locks it to prevent to 
+					//define thread to support multithreading and locks it to prevent 
 					//writing different code parts to file
 					typename std::lock_guard<std::mutex> lock(log_mutex);
 					time(&rawtime);
