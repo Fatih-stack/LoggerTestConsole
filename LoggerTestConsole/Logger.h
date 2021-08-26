@@ -308,7 +308,7 @@ namespace aricanli {
 					}
 					{
 						//thread provides multithreading supports and also 
-						//locking to prevent writing to file from other code parts
+						//locking to prevent writing to file from other threads
 						typename std::lock_guard<std::mutex> lock2(log_mutex2);
 						std::ofstream file(file_path, std::ios_base::app);
 						//write file given inputs in a proper format for logging
@@ -319,7 +319,7 @@ namespace aricanli {
 					//write all type args to file
 					int dummy[] = { 0, ((void)log_writefile(std::forward<Args>(args)),0)... };
 					
-					//mutex locks to prevent writing to file from other code parts
+					//mutex locks to prevent writing to file from other threads
 					typename std::lock_guard<std::mutex> lock2(log_mutex2);
 					std::ofstream file(file_path, std::ios_base::app);
 					file << " on line " << line << " in " << source.c_str() << "\n";
