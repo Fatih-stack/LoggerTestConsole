@@ -185,7 +185,10 @@ namespace aricanli {
 			Logger(const Logger&) = delete;
 			Logger& operator= (const Logger&) = delete;
 
-			~Logger() { wfile.close(); file.close(); }
+			~Logger() { 
+				wfile.close(); 
+				file.close(); 
+			}
 
 			static Logger& instance()
 			{
@@ -247,8 +250,8 @@ namespace aricanli {
 			template <typename T>
 			void wlog_writefile(T && value) {
 				std::lock_guard<std::mutex> lock2(log_mutex2);
-				file << value << " ";
-				std::wstring temp = wstringer(value);
+				wfile << value << " ";
+//				std::wstring temp = wstringer(value);
 //				std::string res(temp.begin(), temp.end());
 //				std::cout << res << " ";
 			}
@@ -328,7 +331,7 @@ namespace aricanli {
 			void wlog(const int& line, const std::wstring& source, const std::wstring& msg_priorty_str,
 				const Severity& msg_severity, const std::wstring& msg, Args && ... args)
 			{
-				if (severity <= msg_severity)	//check severity
+				if (severity >= msg_severity)	//check severity
 				{
 					//Date operation take current time : Day, Month, Hour:Minute:Sec, Year
 					time_t rawtime;
@@ -350,9 +353,8 @@ namespace aricanli {
 					{
 						//define std::lock_guard to support multithreading
 						typename std::lock_guard<std::mutex> lock2(log_mutex2);
-						std::wofstream file(wfile_path, std::ios_base::app);
 						loggerFile lF(wtime, msg_priorty_str, msg);
-						file << lF;
+						wfile << lF;
 					}
 
 					//write args to file
@@ -360,9 +362,8 @@ namespace aricanli {
 
 					//open file and write given inputs to file
 					typename std::lock_guard<std::mutex> lock2(log_mutex2);
-					std::wofstream file(wfile_path, std::ios_base::app);
 					loggerFileLast lF(line, source);
-					file << lF;
+					wfile << lF;
 				}
 			}
 
@@ -371,7 +372,7 @@ namespace aricanli {
 			void slog(const int& line, const std::string& source, const std::string& msg_priorty_str,
 				const Severity& msg_severity, const std::string& msg, Args && ... args)
 			{
-				if (severity <= msg_severity)	//check severity
+				if (severity >= msg_severity)	//check severity
 				{
 					//define std::lock_guard to support multithreading
 					std::lock_guard<std::mutex> lock(log_mutex);
