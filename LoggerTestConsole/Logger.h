@@ -66,8 +66,8 @@ namespace aricanli {
 
 		struct loggerFile
 		{
-			loggerFile(const std::wstring& t, const std::wstring& m, const std::wstring& m_p)
-				: w_time(t), w_msg_priority(m_p), w_msg(m) {}
+			loggerFile(std::wstring && t, std::wstring && m, std::wstring && m_p)
+				: w_time((std::wstring&&)t), w_msg_priority((std::wstring&&)m_p), w_msg((std::wstring&&)m) {}
 			loggerFile(const std::string& t, const std::string& m, const std::string& m_p)
 				: time(t), msg_priority(m_p), msg(m) {}
 			friend std::wofstream& operator << (std::wofstream& wfile, const loggerFile& lF);
@@ -79,8 +79,8 @@ namespace aricanli {
 
 		struct loggerFileLast
 		{
-			loggerFileLast(const int& line, const std::wstring& source) : line(line), w_source(source) {}
-			loggerFileLast(const int& line, const std::string& source) : line(line), source(source) {}
+			loggerFileLast(int line, std::wstring && source) : line(line), w_source((std::wstring &&)source) {}
+			loggerFileLast(int line, std::string && source) : line(line), source((std::string &&)source) {}
 			friend std::wofstream& operator << (std::wofstream& wfile, const loggerFileLast& lF);
 			friend std::ofstream& operator << (std::ofstream& wfile, const loggerFileLast& lF);
 		private:
@@ -161,10 +161,11 @@ namespace aricanli {
 
 			//template is used just for wchar_t type expansion operations
 			template<typename... Args>
-			static void AnyW(const int& line, const std::wstring& source_file, const std::wstring& msg_priorty_str,
-				const Severity& msg_severity, const std::wstring& message, Args && ... args)
+			static void AnyW(int line, std::wstring && source_file, std::wstring && msg_priorty_str,
+				Severity && msg_severity, std::wstring && message, Args && ... args)
 			{
-				instance().wlog(line, source_file, msg_priorty_str, msg_severity, message, args...);
+				instance().wlog(line, (std::wstring&&)source_file, (std::wstring&&)msg_priorty_str, (Severity&&)msg_severity,
+					(std::wstring&&)message, args...);
 			}
 
 			//template is used just for std::string type expansion operations
@@ -328,8 +329,8 @@ namespace aricanli {
 
 			//same as log function difference is that below function just for wchar_t types
 			template<typename... Args>
-			void wlog(const int& line, const std::wstring& source, const std::wstring& msg_priorty_str,
-				const Severity& msg_severity, const std::wstring& msg, Args && ... args)
+			void wlog(int line, std::wstring&& source, std::wstring && msg_priorty_str,
+				Severity && msg_severity, std::wstring && msg, Args && ... args)
 			{
 				if (severity >= msg_severity)	//check severity
 				{
@@ -340,7 +341,7 @@ namespace aricanli {
 
 					//define thread to support multithreading and locks it to prevent 
 					//writing different code parts to file
-					typename std::lock_guard<std::mutex> lock(log_mutex);
+					std::lock_guard<std::mutex> lock(log_mutex);
 					time(&rawtime);
 					timeinfo = localtime(&rawtime);
 
@@ -352,18 +353,17 @@ namespace aricanli {
 					//(time, severity, message, args, line and source file path)
 					{
 						//define std::lock_guard to support multithreading
-						typename std::lock_guard<std::mutex> lock2(log_mutex2);
-						loggerFile lF(wtime, msg_priorty_str, msg);
-						wfile << lF;
+						std::lock_guard<std::mutex> lock2(log_mutex2);
+						wfile << loggerFile{ std::move(wtime), std::move(msg_priorty_str), std::move(msg) };
 					}
 
 					//write args to file
 					int dummy[] = { 0, ((void)wlog_writefile(std::forward<Args>(args)),0)... };
 
 					//open file and write given inputs to file
-					typename std::lock_guard<std::mutex> lock2(log_mutex2);
-					loggerFileLast lF(line, source);
-					wfile << lF;
+					std::lock_guard<std::mutex> lock2(log_mutex2);
+				//	loggerFileLast lF(line, (std::wstring&&)source);
+					wfile << loggerFileLast{ line, std::move(source) };
 				}
 			}
 
